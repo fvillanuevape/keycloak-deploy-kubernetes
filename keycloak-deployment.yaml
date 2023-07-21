@@ -1,0 +1,73 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: keycloak
+  labels:
+    app: keycloak
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: keycloak
+  template:
+    metadata:
+      labels:
+        app: keycloak
+    spec:
+      containers:
+      - name: keycloak
+        image: quay.io/keycloak/keycloak:22.0.0
+        args: ["start-dev","--cache-stack=kubernetes"]
+        resources:
+          requests:
+            memory: "250Mi"
+            cpu: "64m"
+          limits:
+            memory: "512Mi"
+            cpu: "250m"
+        env:
+        - name: KEYCLOAK_ADMIN
+          value: "admin"
+        - name: KEYCLOAK_ADMIN_PASSWORD
+          value: "admin"
+        - name: KC_PROXY
+          value: "edge"
+        - name: KC_HEALTH_ENABLED
+          value: "true"
+        - name: KC_METRICS_ENABLED
+          value: "true"
+        - name: KC_DB
+          value: "postgres"
+        - name: KC_DB_SCHEMA
+          value: "keycloak"
+        - name: KC_DB_URL
+          value: "jdbc:postgresql://ip-postgresql:5432/keycloak"
+        - name: KC_DB_USERNAME
+          value: "keycloak"
+        - name: KC_DB_PASSWORD
+          value: "keycloak"
+        ports:
+        - name: http
+          containerPort: 8080
+        readinessProbe:
+          httpGet:
+            scheme: HTTP
+            path: /health/ready
+            port: 8080
+          initialDelaySeconds: 60
+          periodSeconds: 1
+---  
+apiVersion: v1
+kind: Service
+metadata:
+  name: keycloak
+  labels:
+    app: keycloak
+spec:
+  ports:
+  - name: http
+    port: 8084
+    targetPort: 8080
+  selector:
+    app: keycloak
+  type: LoadBalancer
