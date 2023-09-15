@@ -1,0 +1,31 @@
+version: '2'
+services:
+  postgres:
+    image: postgres
+    container_name: postgres-db
+    volumes:
+      - "D:/docker/postgresql/data:/var/lib/postgresql/data"
+    restart: always
+    environment:
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - '5432:5432'
+  app:
+    depends_on:
+      - postgres
+    image: quay.io/keycloak/keycloak:22.0.0
+    container_name: keycloak
+    ports:
+      - "8080:8080"
+    environment:
+      - KEYCLOAK_ADMIN=admin
+      - KEYCLOAK_ADMIN_PASSWORD=admin
+      - KC_HOSTNAME_ADMIN_URL=http://localhost:8080
+      - KC_HOSTNAME_URL=http://localhost:8080
+      - KC_DB=postgres
+      - KC_DB_URL=jdbc:postgresql://postgres:5432/postgres 
+      - KC_DB_SCHEMA=public
+      - KC_DB_USERNAME=postgres
+      - KC_DB_PASSWORD=postgres
+    command:
+      - start-dev
